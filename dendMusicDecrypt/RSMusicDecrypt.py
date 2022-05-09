@@ -148,11 +148,29 @@ class RSMusicDecrypt():
             index += 4
             
             self.musicList.append(musicArr)
+        self.indexList.append(index)
 
-    def saveTrain(self):
+    def saveMusic(self):
         try:
+            newByteArr = bytearray(self.byteArr[0:self.indexList[0]])
+            for i in range(len(self.musicList)):
+                for j in range(2, len(headerList)):
+                    if headerList[j][0] in ["start", "loop start", "loop end"]:
+                        time = struct.pack("<f", self.musicList[i][j-1])
+                        for n in time:
+                            newByteArr.append(n)
+                    else:
+                        name = self.musicList[i][j-1].encode("shift-jis")
+                        nameLen = len(name)
+                        newByteArr.append(nameLen)
+
+                        for n in name:
+                            newByteArr.append(n)
+
+            
+            newByteArr.extend(self.byteArr[self.indexList[-1]:])
             w = open(self.filePath, "wb")
-            w.write(self.byteArr)
+            w.write(newByteArr)
             w.close()
             return True
         except Exception as e:
