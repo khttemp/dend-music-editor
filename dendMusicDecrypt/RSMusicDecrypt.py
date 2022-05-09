@@ -39,8 +39,8 @@ class RSMusicDecrypt():
         f.write(self.error)
         f.close()
     def decrypt(self, line):
-        #self.trainInfoList = []
-        #self.indexList = []
+        self.musicList = []
+        self.indexList = []
         index = 0
         ver = line[index]
         index += 1
@@ -61,23 +61,31 @@ class RSMusicDecrypt():
         index += 1
 
         for i in range(musicCnt):
+            self.indexList.append(index)
+            musicArr = []
             musicFileNameLen = line[index]
             index += 1
             musicFileName = line[index:index+musicFileNameLen].decode("shift-jis")
+            musicArr.append(musicFileName)
             index += musicFileNameLen
             musicNameLen = line[index]
             index += 1
             musicName = line[index:index+musicNameLen].decode("shift-jis")
+            musicArr.append(musicName)
             index += musicNameLen
             start = struct.unpack("<f", line[index:index+4])[0]
             start = round(start, 4)
+            musicArr.append(start)
             index += 4
             loopStart = struct.unpack("<f", line[index:index+4])[0]
             loopStart = round(loopStart, 4)
+            musicArr.append(loopStart)
             index += 4
             loopEnd = struct.unpack("<f", line[index:index+4])[0]
             loopEnd = round(loopEnd, 4)
+            musicArr.append(loopEnd)
             index += 4
+            self.musicList.append(musicArr)
 
     def saveTrain(self):
         try:

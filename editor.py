@@ -19,19 +19,24 @@ BS = 1
 CS = 2
 RS = 3
 
-class Scrollbarframe():
+class ScrollbarframeWithHeader():
     def __init__(self, parent):
-        self.canvas = Canvas(parent, width=parent.winfo_width(), height=parent.winfo_height())
-        self.frame = Frame(self.canvas)
-        self.frame.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
-
-        self.scrollbar = Scrollbar(parent, orient=VERTICAL, command=self.canvas.yview)
-        self.scrollbar.pack(side=RIGHT, fill=Y)
+        self.headerHeight = 62
+        self.headerCanvas = Canvas(parent, width=parent.winfo_width(), height=self.headerHeight)
+        self.headerFrame = Frame(self.headerCanvas)
+        self.headerCanvas.create_window((0, 0), window=self.headerFrame, anchor="nw")
+        self.headerCanvas.pack()
         
-        self.canvas.create_window((0,0), window=self.frame, anchor="nw")
-        self.canvas.configure(yscrollcommand=self.scrollbar.set)
+        self.canvas = Canvas(parent, width=parent.winfo_width(), height=parent.winfo_height()-self.headerHeight)
+        self.frame = Frame(self.canvas)
+        self.canvas.create_window((0, 0), window=self.frame, anchor="nw")
+        self.frame.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
         self.canvas.pack()
 
+        self.scrollbar = Scrollbar(parent, orient=VERTICAL, command=self.canvas.yview)
+        self.scrollbar.pack(side=RIGHT, fill="y")
+        
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
         self.canvas.bind("<MouseWheel>", self._on_mousewheel)
 
     def _on_mousewheel(self, event):
@@ -44,9 +49,7 @@ class bgmHeaderWidget():
         self.bgmHeaderLb = Label(frame,
                                  text=headerName,
                                  font=("", 20),
-                                 width=headerWidth,
-                                 borderwidth=1,
-                                 relief="solid")
+                                 width=headerWidth)
         self.bgmHeaderLb.grid(row=0, column=i, sticky=N+S)
         headerList.append(self.bgmHeaderLb)
         
@@ -117,16 +120,13 @@ def createWidget():
     
     width = bgmLf.winfo_width()
     height = bgmLf.winfo_height()
-    frame = Scrollbarframe(bgmLf)
-    frame.frame.config(bg="red")
-    frame2 = Scrollbarframe(bgmLf)
+    frame = ScrollbarframeWithHeader(bgmLf)
 
     for i in range(len(decryptFile.headerList)):
-        bgmHeaderWidget(i, frame.frame, decryptFile.headerList[i][0], decryptFile.headerList[i][1])
-    headerList[0].config(bg="white")
+        bgmHeaderWidget(i, frame.headerFrame, decryptFile.headerList[i][0], decryptFile.headerList[i][1])
 
-    for i in range(len(decryptFile.headerList)):
-        bgmHeaderWidget(i, frame2.frame, decryptFile.headerList[i][0], decryptFile.headerList[i][1])
+    for i in range(len(decryptFile.musicList)):
+        bgmWidget(i, frame.frame, decryptFile.musicList)
 
 def editMusic():
     global btnList
