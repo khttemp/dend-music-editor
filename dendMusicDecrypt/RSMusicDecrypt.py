@@ -3,15 +3,69 @@
 import struct
 
 headerList = [
-    ["bgm No", 6],
-    ["1.08基準\n読み込み", 8],
-    ["1.08基準\nBGM名", 8],
-    ["BGM\nファイル名", 10],
-    ["BGM名", 8],
-    ["start", 5],
-    ["loop start", 9],
-    ["loop end", 7],
-    [" ", 3]
+    ["No", 40],
+    ["1.08基準 BGMリスト", 200],
+    ["BGM ファイル名", 200],
+    ["BGM名", 200],
+    ["start", 120],
+    ["loop start", 120],
+    ["loop end", 120]
+]
+
+ver108Music = [
+    "Memories(RSのSelect曲)",
+    "-", # CS曲
+    "-", # BS曲
+    "-", # LS曲
+    "Through The Night",
+    "Be Crazy!",
+    "INTENSE",
+    "APHESIS",
+    "Beyond the Limit",
+    "Lonely City Lights",
+    "DeadlySmile",
+    "MOVE OF THE SOUL",
+    "Nightmare Labyrinth",
+    "Serious Line",
+    "Missin2012 -RisingStage-",
+    "Jump!Jump!Jump!",
+    "Tenderness -starring Nanako-",
+    "SUPER GIRL(Single edit)",
+    "Chaser",
+    "Mass Driver",
+    "Tokyo nights feat.Reica (Ver.5150)",
+    "Crazy Damn My Heart",
+    "Final Blow",
+    "Next 2 You",
+    "Riding on the sky",
+    "-", #I just wanna stay with you
+    "架空 〜Going My Way〜",
+    "FullNotch",
+    "Rail-Roader's shooting star",
+    "Sands of Time 電車でＤ Ver",
+    "Power-running",
+    "r90",
+    "Missin",
+    "Like A Tunder",
+    "Dragon Desier",
+    "Burning Blue",
+    "ひとつだけ Freedom",
+    "Out of Sight",
+    "Red Line",
+    "Sands of Time 2011",
+    "Foxy Sexy Lady",
+    "Ride On Dream",
+    "Childie Sharp",
+    "Dracula",
+    "未来へ繋ぐ道",
+    "Missin 2012",
+    "Waiting For You",
+    "繰り返す日々",
+    "Amore",
+    "ひとつだけFreedom",
+    "SuganoMusic Origunal EUROBEAT Vol.1 Non-Stop Megamix",
+    "Can't You Feel My Heart?",
+    "Space Movement"
 ]
 
 class RSMusicDecrypt():
@@ -63,28 +117,36 @@ class RSMusicDecrypt():
         for i in range(musicCnt):
             self.indexList.append(index)
             musicArr = []
+
+            musicArr.append(ver108Music[i])
+            
             musicFileNameLen = line[index]
             index += 1
             musicFileName = line[index:index+musicFileNameLen].decode("shift-jis")
             musicArr.append(musicFileName)
             index += musicFileNameLen
+            
             musicNameLen = line[index]
             index += 1
             musicName = line[index:index+musicNameLen].decode("shift-jis")
             musicArr.append(musicName)
             index += musicNameLen
+            
             start = struct.unpack("<f", line[index:index+4])[0]
             start = round(start, 4)
             musicArr.append(start)
             index += 4
+            
             loopStart = struct.unpack("<f", line[index:index+4])[0]
             loopStart = round(loopStart, 4)
             musicArr.append(loopStart)
             index += 4
+            
             loopEnd = struct.unpack("<f", line[index:index+4])[0]
             loopEnd = round(loopEnd, 4)
             musicArr.append(loopEnd)
             index += 4
+            
             self.musicList.append(musicArr)
 
     def saveTrain(self):

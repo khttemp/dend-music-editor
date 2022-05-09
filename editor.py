@@ -21,70 +21,29 @@ RS = 3
 
 class ScrollbarframeWithHeader():
     def __init__(self, parent):
-        self.headerHeight = 62
-        self.headerCanvas = Canvas(parent, width=parent.winfo_width(), height=self.headerHeight)
-        self.headerFrame = Frame(self.headerCanvas)
-        self.headerCanvas.create_window((0, 0), window=self.headerFrame, anchor="nw")
-        self.headerCanvas.pack()
-        
-        self.canvas = Canvas(parent, width=parent.winfo_width(), height=parent.winfo_height()-self.headerHeight)
-        self.frame = Frame(self.canvas)
-        self.canvas.create_window((0, 0), window=self.frame, anchor="nw")
-        self.frame.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
-        self.canvas.pack()
+        self.frame = ttk.Frame(parent)
+        self.frame.pack(expand=True, fill=BOTH)
 
-        self.scrollbar = Scrollbar(parent, orient=VERTICAL, command=self.canvas.yview)
-        self.scrollbar.pack(side=RIGHT, fill="y")
-        
-        self.canvas.configure(yscrollcommand=self.scrollbar.set)
-        self.canvas.bind("<MouseWheel>", self._on_mousewheel)
+        self.tree = ttk.Treeview(self.frame, selectmode="browse")
 
-    def _on_mousewheel(self, event):
-        self.canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        self.style = ttk.Style()
+        self.style.configure("Treeview.Heading", font=("", 14))
+        self.style.configure("Treeview", font=("", 12))
 
-class bgmHeaderWidget():
-    global headerList
+        self.scrollbar_x = ttk.Scrollbar(self.frame, orient=HORIZONTAL, command=self.tree.xview)
+        self.tree.configure(xscrollcommand=lambda f, l: self.scrollbar_x.set(f, l))
+        self.scrollbar_x.pack(side=BOTTOM, fill=X)
+
+        self.scrollbar_y = ttk.Scrollbar(self.frame, orient=VERTICAL, command=self.tree.yview)
+        self.tree.configure(yscrollcommand=lambda f, l: self.scrollbar_y.set(f, l))
+        self.scrollbar_y.pack(side=RIGHT, fill=Y)
+
+        self.tree.pack(expand=True, fill=BOTH)
+        self.tree.bind("<<TreeviewSelect>>", self.treeSelect)
     
-    def __init__(self, i, frame, headerName, headerWidth):
-        self.bgmHeaderLb = Label(frame,
-                                 text=headerName,
-                                 font=("", 20),
-                                 width=headerWidth)
-        self.bgmHeaderLb.grid(row=0, column=i, sticky=N+S)
-        headerList.append(self.bgmHeaderLb)
-        
-        
-class bgmWidget():
-    global decryptFile
-    
-    def __init__(self, i, notchCnt, frame, speed):
+
+    def treeSelect(self, event):
         pass
-        
-
-    def editVar(self, var, value, flag = False):
-        result = sd.askstring(title="値変更", prompt="値を入力してください", initialvalue=value)
-
-        """
-        if result:
-            try:
-                if flag:
-                    try:
-                        result = int(result)
-                        var.set(result)
-                    except:
-                        errorMsg = "整数で入力してください。"
-                        mb.showerror(title="整数エラー", message=errorMsg)
-                else:
-                    try:
-                        result = float(result)
-                        var.set(result)
-                    except:
-                        errorMsg = "数字で入力してください。"
-                        mb.showerror(title="数字エラー", message=errorMsg)
-            except Exception:
-                errorMsg = "予想外のエラーです"
-                mb.showerror(title="エラー", message=errorMsg)
-        """
         
 def openFile():
     global decryptFile
@@ -122,11 +81,23 @@ def createWidget():
     height = bgmLf.winfo_height()
     frame = ScrollbarframeWithHeader(bgmLf)
 
+    treeHeaderList = []
+
     for i in range(len(decryptFile.headerList)):
-        bgmHeaderWidget(i, frame.headerFrame, decryptFile.headerList[i][0], decryptFile.headerList[i][1])
+        treeHeaderList.append(decryptFile.headerList[i][0])
+
+    frame.tree["columns"] = tuple(treeHeaderList)
+
+    frame.tree.column('#0',width=0, stretch='no')
+    for i in range(len(decryptFile.headerList)):
+        frame.tree.column(decryptFile.headerList[i][0], anchor=CENTER, width=decryptFile.headerList[i][1])
+
+    for i in range(len(decryptFile.headerList)):
+        frame.tree.heading(decryptFile.headerList[i][0], text=decryptFile.headerList[i][0], anchor=CENTER)
 
     for i in range(len(decryptFile.musicList)):
-        bgmWidget(i, frame.frame, decryptFile.musicList)
+        data = tuple([i]) + tuple(decryptFile.musicList[i])
+        frame.tree.insert(parent='', index='end', iid=i, values=data)
 
 def editMusic():
     global btnList
