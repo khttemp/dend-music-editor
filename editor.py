@@ -9,8 +9,9 @@ from tkinter import messagebox as mb
 from tkinter import simpledialog as sd
 import os
 from pygame import mixer
-import time
-
+from dendMusicDecrypt import LSMusicDecrypt as dendLs
+from dendMusicDecrypt import BSMusicDecrypt as dendBs
+from dendMusicDecrypt import CSMusicDecrypt as dendCs
 from dendMusicDecrypt import RSMusicDecrypt as dendRs
 
 playback = None
@@ -51,7 +52,9 @@ class ScrollbarframeWithHeader():
         selectId = self.tree.selection()[0]
         selectItem = self.tree.set(selectId)
         edit_button['state'] = 'normal'
-        swap_button['state'] = 'normal'
+
+        if v_radio.get() != LS:
+            swap_button['state'] = 'normal'
 
 class inputDialog(sd.Dialog):
     global decryptFile
@@ -63,6 +66,7 @@ class inputDialog(sd.Dialog):
         self.itemList = []
         self.v_itemList = []
         self.entryList = []
+        self.errorFlag = False
         if self.bgmItem != None:
             self.mode = "edit"
             self.infoMsg = "このまま修正してもよろしいですか？"
@@ -70,7 +74,7 @@ class inputDialog(sd.Dialog):
             self.mode = "swap"
             self.infoMsg = ""
             self.swapInfoMsg = "このまま入れ替えてもよろしいですか？"
-            
+
         super().__init__(master)
     def body(self, master):
         self.resizable(False, False)
@@ -105,11 +109,16 @@ class inputDialog(sd.Dialog):
                     continue
                 swapBgmList.append("%02d(%s)" % (bgm, decryptFile.musicList[bgm][2]))
 
-            self.v_swap = StringVar()
-            self.v_swap.set(swapBgmList[0])
-            self.swapCb = ttk.Combobox(master, textvariable=self.v_swap, width=30, state="readonly", value=swapBgmList)
-            self.swapCb.grid(row=0, column=1, sticky=N+S, pady=10)
-            self.swapCb.set(swapBgmList[0])
+            if len(swapBgmList) == 0:
+                errorMsg = "入れ替えるBGMリストがありません"
+                mb.showwarning(title="警告", message=errorMsg, parent=self)
+                self.errorFlag = True
+            else:
+                self.v_swap = StringVar()
+                self.v_swap.set(swapBgmList[0])
+                self.swapCb = ttk.Combobox(master, textvariable=self.v_swap, width=30, state="readonly", value=swapBgmList)
+                self.swapCb.grid(row=0, column=1, sticky=N+S, pady=10)
+                self.swapCb.set(swapBgmList[0])
 
     def buttonbox(self):
         box = Frame(self, padx=5, pady=5)
@@ -165,11 +174,23 @@ def openFile():
     global decryptFile
 
     if v_radio.get() == LS:
-        pass
+        file_path = fd.askopenfilename(filetypes=[("RAIL_DATA", "RAIL*.BIN")])
+        if file_path:
+            del decryptFile
+            decryptFile = None
+            decryptFile = dendLs.LSMusicDecrypt(file_path)
     elif v_radio.get() == BS:
-        pass
+        file_path = fd.askopenfilename(filetypes=[("MUSIC_DATA", "LS_INFO.BIN")])
+        if file_path:
+            del decryptFile
+            decryptFile = None
+            decryptFile = dendBs.BSMusicDecrypt(file_path)
     elif v_radio.get() == CS:
-        pass
+        file_path = fd.askopenfilename(filetypes=[("MUSIC_DATA", "SOUNDTRACK_INFO.BIN")])
+        if file_path:
+            del decryptFile
+            decryptFile = None
+            decryptFile = dendCs.CSMusicDecrypt(file_path)
     elif v_radio.get() == RS:
         file_path = fd.askopenfilename(filetypes=[("MUSIC_DATA", "SOUNDTRACK_INFO_4TH.BIN")])
         if file_path:
@@ -178,48 +199,59 @@ def openFile():
             decryptFile = dendRs.RSMusicDecrypt(file_path)
 
     errorMsg = "予想外のエラーが出ました。\n電車でDのファイルではない、またはファイルが壊れた可能性があります。"
-    if file_path:        
+    if file_path:
+        deleteWidget()
         if not decryptFile.open():
             decryptFile.printError()
             mb.showerror(title="エラー", message=errorMsg)
             return
+
+        if v_radio.get() == LS and decryptFile.error != "":
+            mb.showerror(title="エラー", message=decryptFile.error)
+            return
         
-        deleteWidget()
         createWidget()
 
 def openBgmFile():
     global bgmScale
     global after_id
-    
-    file_path = fd.askopenfilename(filetypes=[("bgm", "*.ogg;*.wav")])
-    if file_path:
-        if after_id != None:
-            root.after_cancel(after_id)
-        file_name = os.path.splitext(os.path.basename(file_path))[0]
-        v_readBgm.set(file_name)
-        startEt["state"] = "readonly"
-        loopStartEt["state"] = "readonly"
-        loopEndEt["state"] = "readonly"
-        bgmScale["state"] = "disabled"
-        bgmPlayBtn["state"] = "disabled"
-        bgmPauseBtn["state"] = "disabled"
-        root.update()
-        
-        mixer.init()
-        mixer.music.load(file_path)
-        sound = mixer.Sound(file_path)
-        bgmScale["to"] = round(sound.get_length(), 2)
-        
-        startEt["state"] = "normal"
-        loopStartEt["state"] = "normal"
-        loopEndEt["state"] = "normal"
-        v_start.set(0.0)
-        v_loopStart.set(0.0)
-        v_loopEnd.set(-1.0)
-        val.set(0.0)
-        bgmScale["state"] = "normal"
-        bgmPlayBtn["state"] = "normal"
-        bgmPauseBtn["state"] = "disabled"
+
+    try:
+        file_path = fd.askopenfilename(filetypes=[("bgm", "*.ogg;*.wav")])
+        if file_path:
+            if after_id != None:
+                root.after_cancel(after_id)
+
+            mixer.init()
+            mixer.music.load(file_path)
+            sound = mixer.Sound(file_path)
+            
+            file_name = os.path.splitext(os.path.basename(file_path))[0]
+            v_readBgm.set(file_name)
+            startEt["state"] = "readonly"
+            loopStartEt["state"] = "readonly"
+            loopEndEt["state"] = "readonly"
+            bgmScale["state"] = "disabled"
+            bgmPlayBtn["state"] = "disabled"
+            bgmPauseBtn["state"] = "disabled"
+            root.update()
+            
+            bgmScale["to"] = round(sound.get_length(), 2)
+            
+            startEt["state"] = "normal"
+            loopStartEt["state"] = "normal"
+            loopEndEt["state"] = "normal"
+            v_start.set(0.0)
+            v_loopStart.set(0.0)
+            v_loopEnd.set(-1.0)
+            val.set(0.0)
+            bgmScale["state"] = "normal"
+            bgmPlayBtn["state"] = "normal"
+            bgmPauseBtn["state"] = "disabled"
+    except:
+        errorMsg = "サポートしないファイル形式です。"
+        mb.showerror(title="ファイルエラー", message=errorMsg, parent=self)
+        return
 
 
 def adjustPlayback():
@@ -368,13 +400,11 @@ def deleteWidget():
     for child in children:
         child.destroy()
 
-def selectGame():
-    deleteWidget()
     edit_button['state'] = 'disabled'
     swap_button['state'] = 'disabled'
         
 root = Tk()
-root.title("電車でD LBCR BGM改造 1.0.0")
+root.title("電車でD LBCR BGM改造 1.1.0")
 root.geometry("1024x768")
 
 menubar = Menu(root)
@@ -394,16 +424,16 @@ swap_button.place(relx = 0.75, rely=0.02, relwidth=0.2, height=25)
 
 v_radio = IntVar()
 
-lsRb = Radiobutton(root, text="Lightning Stage", command = selectGame, variable=v_radio, value=LS)
+lsRb = Radiobutton(root, text="Lightning Stage", command = deleteWidget, variable=v_radio, value=LS)
 lsRb.place(relx=0.04, rely=0.02)
 
-bsRb = Radiobutton(root, text="Burning Stage", command = selectGame, variable=v_radio, value=BS)
+bsRb = Radiobutton(root, text="Burning Stage", command = deleteWidget, variable=v_radio, value=BS)
 bsRb.place(relx=0.22, rely=0.02)
 
-csRb = Radiobutton(root, text="Climax Stage", command = selectGame, variable=v_radio, value=CS)
+csRb = Radiobutton(root, text="Climax Stage", command = deleteWidget, variable=v_radio, value=CS)
 csRb.place(relx=0.04, rely=0.07)
 
-rsRb = Radiobutton(root, text="Rising Stage", command = selectGame, variable=v_radio, value=RS)
+rsRb = Radiobutton(root, text="Rising Stage", command = deleteWidget, variable=v_radio, value=RS)
 rsRb.select()
 rsRb.place(relx=0.22, rely=0.07)
 

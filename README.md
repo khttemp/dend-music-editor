@@ -42,6 +42,12 @@ Issue に上げられたバグ情報が必ず修正されるものではない�
 
 1. メニュの「ファイルの開く」でバイナリファイルを開く。
 
+    Lightning Stageは、「RAIL*.BIN」を開く
+
+    Burning Stageは、「LS_INFO.BIN」を開く
+
+    Climax Stageは、「SOUNDTRACK_INFO.BIN」を開く
+
     Rising Stageは、「SOUNDTRACK_INFO_4TH.BIN」を開く。
 
     必ず、プログラムが書込みできる場所で行ってください
