@@ -250,7 +250,7 @@ def openBgmFile():
             bgmPauseBtn["state"] = "disabled"
     except:
         errorMsg = "サポートしないファイル形式です。"
-        mb.showerror(title="ファイルエラー", message=errorMsg, parent=self)
+        mb.showerror(title="ファイルエラー", message=errorMsg)
         return
 
 
@@ -404,7 +404,7 @@ def deleteWidget():
     swap_button['state'] = 'disabled'
         
 root = Tk()
-root.title("電車でD LBCR BGM改造 1.1.0")
+root.title("電車でD LBCR BGM改造 1.1.1")
 root.geometry("1024x768")
 
 menubar = Menu(root)
