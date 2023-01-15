@@ -28,6 +28,7 @@ ver107Music = [
     "Missin"
 ]
 
+
 class BSMusicDecrypt():
     def __init__(self, filePath):
         self.filePath = filePath
@@ -48,23 +49,28 @@ class BSMusicDecrypt():
         except Exception as e:
             self.error = str(e)
             return False
+
     def printError(self):
         f = open("error_log.txt", "w")
         f.write(self.error)
         f.close()
+
     def decrypt(self, line):
         self.musicList = []
         self.indexList = []
         index = 0
-        ver = line[index]
+        # ver
+        line[index]
         index += 1
 
         tcnt = line[index]
         index += 1
         for j in range(tcnt):
-            track_time = struct.unpack("<h", line[index:index+2])[0]
+            # track_time
+            struct.unpack("<h", line[index:index + 2])[0]
             index += 2
-        total_time = struct.unpack("<h", line[index:index+2])[0]
+        # total_time
+        struct.unpack("<h", line[index:index + 2])[0]
         index += 2
 
         musicCnt = line[index]
@@ -73,31 +79,30 @@ class BSMusicDecrypt():
         for i in range(musicCnt):
             self.indexList.append(index)
             musicArr = []
-
             musicArr.append(ver107Music[i])
-            
+
             musicFileNameLen = line[index]
             index += 1
-            musicFileName = line[index:index+musicFileNameLen].decode("shift-jis")
+            musicFileName = line[index:index + musicFileNameLen].decode("shift-jis")
             musicArr.append(musicFileName)
             index += musicFileNameLen
-            
+
             musicNameLen = line[index]
             index += 1
-            musicName = line[index:index+musicNameLen].decode("shift-jis")
+            musicName = line[index:index + musicNameLen].decode("shift-jis")
             musicArr.append(musicName)
             index += musicNameLen
-            
-            start = struct.unpack("<f", line[index:index+4])[0]
+
+            start = struct.unpack("<f", line[index:index + 4])[0]
             start = round(start, 4)
             musicArr.append(start)
             index += 4
-            
-            loopEnd = struct.unpack("<f", line[index:index+4])[0]
+
+            loopEnd = struct.unpack("<f", line[index:index + 4])[0]
             loopEnd = round(loopEnd, 4)
             musicArr.append(loopEnd)
             index += 4
-            
+
             self.musicList.append(musicArr)
         self.indexList.append(index)
 
@@ -107,18 +112,17 @@ class BSMusicDecrypt():
             for i in range(len(self.musicList)):
                 for j in range(2, len(headerList)):
                     if headerList[j][0] in ["start", "loop start", "loop end"]:
-                        time = struct.pack("<f", self.musicList[i][j-1])
+                        time = struct.pack("<f", self.musicList[i][j - 1])
                         for n in time:
                             newByteArr.append(n)
                     else:
-                        name = self.musicList[i][j-1].encode("shift-jis")
+                        name = self.musicList[i][j - 1].encode("shift-jis")
                         nameLen = len(name)
                         newByteArr.append(nameLen)
 
                         for n in name:
                             newByteArr.append(n)
 
-            
             newByteArr.extend(self.byteArr[self.indexList[-1]:])
             w = open(self.filePath, "wb")
             w.write(newByteArr)
