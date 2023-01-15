@@ -1,7 +1,8 @@
 __pycache__
 build
-dist
+dist*
 *.spec
 *.txt
 *.bat
 *.bin
+*.exe
